@@ -129,15 +129,14 @@ deploy() {
         fi
         
         echo "Starting deployment to hosts in $ip_list_file..."
-        # Debug information
-        echo "Found the following hosts in the file:"
-        cat "$ip_list_file"
         
-        # Make sure we're reading the file line by line properly
-        while IFS= read -r host || [[ -n "$host" ]]; do
+        # Read hosts from file into an array for reliable processing
+        mapfile -t hosts < "$ip_list_file"
+        
+        # Iterate through the array
+        for host in "${hosts[@]}"; do
             # Skip empty lines and comments
             if [[ -z "$host" || "$host" =~ ^[[:space:]]*# ]]; then
-                echo "Skipping line: $host"
                 continue
             fi
             
@@ -156,7 +155,7 @@ deploy() {
             else
                 echo "Failed to deploy to $host"
             fi
-        done < "$ip_list_file"
+        done
         
         echo "Deployment completed to all hosts in the list."
     else
