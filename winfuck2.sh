@@ -48,8 +48,8 @@ execute() {
             ;;
         2)
             read -rp "What do you want to name the scheduled task: " taskName
-            read -rp "What description do you want to set for the task: " taskDescription
-            persist="schtasks /create /sc minute /mo 15 /tn \"$taskName\" /tr \"$fullPath\" /ru \"SYSTEM\" /f ; schtasks /change /tn \"$taskName\" /description \"$taskDescription\""
+            # Removed task description entirely
+            persist="schtasks /create /sc minute /mo 15 /tn \"$taskName\" /tr \"$fullPath\" /ru \"SYSTEM\" /st 00:00 /f && schtasks /run /tn \"$taskName\""
             ;;
         3) 
             read -rp "Registry Path?: " regPath
