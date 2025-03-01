@@ -48,8 +48,9 @@ execute() {
             ;;
         2)
             read -rp "What do you want to name the scheduled task: " taskName
-            # Removed task description entirely
-            persist="schtasks /create /sc minute /mo 15 /tn \"$taskName\" /tr \"$fullPath\" /ru \"SYSTEM\" /st 00:00 /f && schtasks /run /tn \"$taskName\""
+            read -rp "How often should the task run (in minutes): " taskFrequency
+            # Using semicolon instead of && for PowerShell and adding taskFrequency variable
+            persist="schtasks /create /sc minute /mo $taskFrequency /tn \"$taskName\" /tr \"$fullPath\" /ru \"SYSTEM\" /st 00:00 /f; schtasks /run /tn \"$taskName\""
             ;;
         3) 
             read -rp "Registry Path?: " regPath
