@@ -89,7 +89,6 @@ deploy() {
         fi
         read -rsp "Enter SSH password: " ssh_pass
         echo ""
-        ssh_cmd="sshpass -p '$ssh_pass' ssh -o StrictHostKeyChecking=no"
     elif [[ "$auth_method" == "3" ]]; then
         read -rp "Enter path to SSH private key: " key_path
         if [ ! -f "$key_path" ]; then
@@ -97,11 +96,9 @@ deploy() {
             exit 1
         fi
         ssh_opts="-i $key_path -o StrictHostKeyChecking=no"
-        ssh_cmd="ssh $ssh_opts"
     else
         # Default key location
         ssh_opts="-o StrictHostKeyChecking=no"
-        ssh_cmd="ssh $ssh_opts"
     fi
     
     # Choose between single IP or IP list file
@@ -131,11 +128,21 @@ deploy() {
             exit 1
         fi
         
-        while IFS= read -r host; do
+        echo "Starting deployment to hosts in $ip_list_file..."
+        # Debug information
+        echo "Found the following hosts in the file:"
+        cat "$ip_list_file"
+        
+        # Make sure we're reading the file line by line properly
+        while IFS= read -r host || [[ -n "$host" ]]; do
             # Skip empty lines and comments
-            if [[ -z "$host" || "$host" =~ ^# ]]; then
+            if [[ -z "$host" || "$host" =~ ^[[:space:]]*# ]]; then
+                echo "Skipping line: $host"
                 continue
             fi
+            
+            # Trim whitespace
+            host=$(echo "$host" | tr -d '[:space:]')
             
             echo "Deploying to $ssh_user@$host..."
             if [[ "$auth_method" == "1" ]]; then
@@ -150,6 +157,8 @@ deploy() {
                 echo "Failed to deploy to $host"
             fi
         done < "$ip_list_file"
+        
+        echo "Deployment completed to all hosts in the list."
     else
         echo "Invalid option. Exiting."
         exit 1
